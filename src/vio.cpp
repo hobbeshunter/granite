@@ -1417,10 +1417,13 @@ class VioDataset {
       }
       os << "# timestamp tx ty tz qx qy qz qw" << std::endl;
 
+      bool first_segment = true;
       for (size_t idx = 0; idx < vio_t_ns.size(); idx++) {
-        if (idx > 0) {
+        if (vio_t_ns.at(idx).empty()) continue;
+        if (!first_segment) {
           os << "nan nan nan nan nan nan nan nan" << std::endl;
         }
+        first_segment = false;
         for (size_t i = 0; i < vio_t_ns.at(idx).size(); i++) {
           const Sophus::SE3d& pose = vio_T.at(idx)[i];
           os << std::scientific << std::setprecision(18)
@@ -1449,10 +1452,13 @@ class VioDataset {
             "[],q_RS_x [],q_RS_y [],q_RS_z []"
          << std::endl;
 
+      bool first_segment = true;
       for (size_t idx = 0; idx < vio_t_ns.size(); idx++) {
-        if (idx > 0) {
+        if (vio_t_ns.at(idx).empty()) continue;
+        if (!first_segment) {
           os << "nan,nan,nan,nan,nan,nan,nan,nan" << std::endl;
         }
+        first_segment = false;
         for (size_t i = 0; i < vio_t_ns.at(idx).size(); i++) {
           const Sophus::SE3d& pose = vio_T.at(idx)[i];
           os << std::scientific << std::setprecision(18)
@@ -1469,10 +1475,13 @@ class VioDataset {
     } else {
       std::ofstream os("trajectory_kitti.txt");
 
+      bool first_segment = true;
       for (size_t idx = 0; idx < vio_t_ns.size(); idx++) {
-        if (idx > 0) {
+        if (vio_t_ns.at(idx).empty()) continue;
+        if (!first_segment) {
           os << "nan nan nan nan nan nan nan nan nan nan nan nan" << std::endl;
         }
+        first_segment = false;
         for (size_t i = 0; i < vio_t_ns.at(idx).size(); i++) {
           Eigen::Matrix<double, 3, 4> mat = vio_T.at(idx)[i].matrix3x4();
           os << std::scientific << std::setprecision(12) << mat.row(0) << " "
