@@ -77,6 +77,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "App
   endif()
 else()
   set(GRANITE_CXX_FLAGS "${GRANITE_CXX_FLAGS} -Wno-error=maybe-uninitialized -Wno-error=implicit-fallthrough")
+  add_compile_options(-Wno-maybe-uninitialized -Wno-parentheses)
 
   if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 9)
       # These are disabled to avoid lot's of warnings in Eigen code with gcc-9

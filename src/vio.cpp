@@ -1399,17 +1399,6 @@ class VioDataset {
   void saveTrajectoryButton() {
     std::cout << "Saving trajectory..." << std::endl;
 
-    size_t best_idx = 0;
-    {
-      size_t best_length = 0;
-      for (size_t idx = 0; idx < vio_t_ns.size(); idx++) {
-        if (vio_t_ns.at(idx).size() > best_length) {
-          best_idx = idx;
-          best_length = vio_t_ns.at(idx).size();
-        }
-      }
-    }
-
     tbb::concurrent_vector<tbb::concurrent_vector<
         Sophus::SE3d, Eigen::aligned_allocator<Sophus::SE3d>>>& vio_T =
         vio_T_w_i;
@@ -1428,14 +1417,19 @@ class VioDataset {
       }
       os << "# timestamp tx ty tz qx qy qz qw" << std::endl;
 
-      for (size_t i = 0; i < vio_t_ns.at(best_idx).size(); i++) {
-        const Sophus::SE3d& pose = vio_T.at(best_idx)[i];
-        os << std::scientific << std::setprecision(18)
-           << vio_t_ns.at(best_idx)[i] * 1e-9 << " " << pose.translation().x()
-           << " " << pose.translation().y() << " " << pose.translation().z()
-           << " " << pose.unit_quaternion().x() << " "
-           << pose.unit_quaternion().y() << " " << pose.unit_quaternion().z()
-           << " " << pose.unit_quaternion().w() << std::endl;
+      for (size_t idx = 0; idx < vio_t_ns.size(); idx++) {
+        if (idx > 0) {
+          os << "nan nan nan nan nan nan nan nan" << std::endl;
+        }
+        for (size_t i = 0; i < vio_t_ns.at(idx).size(); i++) {
+          const Sophus::SE3d& pose = vio_T.at(idx)[i];
+          os << std::scientific << std::setprecision(18)
+             << vio_t_ns.at(idx)[i] * 1e-9 << " " << pose.translation().x()
+             << " " << pose.translation().y() << " " << pose.translation().z()
+             << " " << pose.unit_quaternion().x() << " "
+             << pose.unit_quaternion().y() << " " << pose.unit_quaternion().z()
+             << " " << pose.unit_quaternion().w() << std::endl;
+        }
       }
 
       os.close();
@@ -1455,14 +1449,19 @@ class VioDataset {
             "[],q_RS_x [],q_RS_y [],q_RS_z []"
          << std::endl;
 
-      for (size_t i = 0; i < vio_t_ns.at(best_idx).size(); i++) {
-        const Sophus::SE3d& pose = vio_T.at(best_idx)[i];
-        os << std::scientific << std::setprecision(18)
-           << vio_t_ns.at(best_idx)[i] << "," << pose.translation().x() << ","
-           << pose.translation().y() << "," << pose.translation().z() << ","
-           << pose.unit_quaternion().w() << "," << pose.unit_quaternion().x()
-           << "," << pose.unit_quaternion().y() << ","
-           << pose.unit_quaternion().z() << std::endl;
+      for (size_t idx = 0; idx < vio_t_ns.size(); idx++) {
+        if (idx > 0) {
+          os << "nan,nan,nan,nan,nan,nan,nan,nan" << std::endl;
+        }
+        for (size_t i = 0; i < vio_t_ns.at(idx).size(); i++) {
+          const Sophus::SE3d& pose = vio_T.at(idx)[i];
+          os << std::scientific << std::setprecision(18)
+             << vio_t_ns.at(idx)[i] << "," << pose.translation().x() << ","
+             << pose.translation().y() << "," << pose.translation().z() << ","
+             << pose.unit_quaternion().w() << "," << pose.unit_quaternion().x()
+             << "," << pose.unit_quaternion().y() << ","
+             << pose.unit_quaternion().z() << std::endl;
+        }
       }
 
       std::cout << "Saved trajectory in Euroc Dataset format in trajectory.csv"
@@ -1470,10 +1469,15 @@ class VioDataset {
     } else {
       std::ofstream os("trajectory_kitti.txt");
 
-      for (size_t i = 0; i < vio_t_ns.at(best_idx).size(); i++) {
-        Eigen::Matrix<double, 3, 4> mat = vio_T.at(best_idx)[i].matrix3x4();
-        os << std::scientific << std::setprecision(12) << mat.row(0) << " "
-           << mat.row(1) << " " << mat.row(2) << " " << std::endl;
+      for (size_t idx = 0; idx < vio_t_ns.size(); idx++) {
+        if (idx > 0) {
+          os << "nan nan nan nan nan nan nan nan nan nan nan nan" << std::endl;
+        }
+        for (size_t i = 0; i < vio_t_ns.at(idx).size(); i++) {
+          Eigen::Matrix<double, 3, 4> mat = vio_T.at(idx)[i].matrix3x4();
+          os << std::scientific << std::setprecision(12) << mat.row(0) << " "
+             << mat.row(1) << " " << mat.row(2) << " " << std::endl;
+        }
       }
 
       os.close();

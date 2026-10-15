@@ -864,6 +864,16 @@ void KeypointVioEstimator::optimize(
             Hdiag_lambda[i] = std::max(Hdiag_lambda[i], min_lambda);
 
           const Eigen::VectorXd inc = lopt.accum.solve(&Hdiag_lambda);
+
+          // avoid NaN in increment (would crash in Sophus' SO3::exp when
+          // applying the increment to the poses); increase damping instead
+          if (!inc.array().isFinite().all()) {
+            lambda = std::min(max_lambda, lambda_vee * lambda);
+            lambda_vee *= 2;
+            max_iter--;
+            continue;
+          }
+
           double max_inc = inc.array().abs().maxCoeff();
           if (max_inc < 1e-4) converged = true;
 
@@ -940,6 +950,13 @@ void KeypointVioEstimator::optimize(
           Hdiag_lambda[i] = std::max(Hdiag_lambda[i], min_lambda);
 
         const Eigen::VectorXd inc = lopt.accum.solve(&Hdiag_lambda);
+
+        // a non-finite increment would crash in Sophus' SO3::exp when applied
+        // to the poses; skip this iteration instead
+        if (!inc.array().isFinite().all()) {
+          break;
+        }
+
         double max_inc = inc.array().abs().maxCoeff();
         if (max_inc < 1e-4) converged = true;
 

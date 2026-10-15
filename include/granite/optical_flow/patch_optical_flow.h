@@ -267,9 +267,13 @@ class PatchOpticalFlow : public OpticalFlowBase {
 
       transform.translation() /= scale;
 
-      // Perform tracking on current level
-      patch_valid &=
-          trackPointAtLevel(pyr.lvl(level), patch_vec[level], transform);
+      // TODO: maybe we should better check patch validity when creating points
+      const auto& p = patch_vec[level];
+      patch_valid &= p.valid;
+      if (patch_valid) {
+        // Perform tracking on current level
+        patch_valid &= trackPointAtLevel(pyr.lvl(level), p, transform);
+      }
 
       transform.translation() *= scale;
     }
@@ -293,16 +297,24 @@ class PatchOpticalFlow : public OpticalFlowBase {
 
       bool valid = dp.residual(img_2, transformed_pat, res);
 
-      if (valid) {
-        Vector3 inc = -dp.H_se2_inv_J_se2_T * res;
-        transform *= SE2::exp(inc).matrix();
+      patch_valid &= valid;
 
-        const int filter_margin = 2;
+      if (patch_valid) {
+        const Vector3 inc = -dp.H_se2_inv_J_se2_T * res;
 
-        if (!img_2.InBounds(transform.translation(), filter_margin))
-          patch_valid = false;
-      } else {
-        patch_valid = false;
+        // avoid NaN in increment (leads to SE2::exp crashing)
+        patch_valid &= inc.array().isFinite().all();
+
+        // avoid very large increment
+        patch_valid &= inc.template lpNorm<Eigen::Infinity>() < 1e6;
+
+        if (patch_valid) {
+          transform *= SE2::exp(inc).matrix();
+
+          const int filter_margin = 2;
+
+          patch_valid &= img_2.InBounds(transform.translation(), filter_margin);
+        }
       }
     }
 
