@@ -314,11 +314,8 @@ class FrameToFrameOpticalFlow : public OpticalFlowBase {
 
       PatchT p(old_pyr.lvl(level), old_transform.translation() / scale);
 
-      patch_valid &= p.valid;
-      if (patch_valid) {
-        // Perform tracking on current level
-        patch_valid &= trackPointAtLevel(pyr.lvl(level), p, transform_tmp);
-      }
+      // Perform tracking on current level
+      patch_valid = trackPointAtLevel(pyr.lvl(level), p, transform_tmp);
 
       if (level == static_cast<ssize_t>(pyramid_level) + 1 && !patch_valid) {
         return false;
@@ -352,24 +349,22 @@ class FrameToFrameOpticalFlow : public OpticalFlowBase {
 
       bool valid = dp.residual(img_2, transformed_pat, res);
 
-      patch_valid &= valid;
+      if (valid) {
+        Vector3 inc = -dp.H_se2_inv_J_se2_T * res;
 
-      if (patch_valid) {
-        const Vector3 inc = -dp.H_se2_inv_J_se2_T * res;
-
-        // avoid NaN in increment (leads to SE2::exp crashing)
-        patch_valid &= inc.array().isFinite().all();
-
-        // avoid very large increment
-        patch_valid &= inc.template lpNorm<Eigen::Infinity>() < 1e6;
-
-        if (patch_valid) {
+        if (inc.array().isFinite().all()) {
           transform *= SE2::exp(inc).matrix();
-
-          const int filter_margin = 2;
-
-          patch_valid &= img_2.InBounds(transform.translation(), filter_margin);
+        } else {
+          patch_valid = false;
+          break;
         }
+
+        const int filter_margin = 2;
+
+        if (!img_2.InBounds(transform.translation(), filter_margin))
+          patch_valid = false;
+      } else {
+        patch_valid = false;
       }
     }
 
