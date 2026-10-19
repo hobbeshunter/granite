@@ -523,8 +523,10 @@ void CamCalib::initCamIntrinsics() {
           }
         }
 
-        w = img_vec[j].img->w;
-        h = img_vec[j].img->h;
+        if (img_vec[j].img.get()) {
+          w = img_vec[j].img->w;
+          h = img_vec[j].img->h;
+        }
       }
 
       GRANITE_ASSERT(w > 0 && h > 0);

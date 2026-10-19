@@ -147,9 +147,8 @@ class EurocVioDataset : public VioDataset {
           res[i].exposure = exp_it->second;
         }
       } else {
-        std::cerr << "image '" << full_image_path << "' does not exist"
+        std::cout << "[WARN] image '" << full_image_path << "' does not exist"
                   << std::endl;
-        std::abort();
       }
     }
 
